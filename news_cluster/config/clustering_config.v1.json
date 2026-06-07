@@ -1,0 +1,56 @@
+{
+  "clustering": {
+    "default_clusterer": "similarity",
+    "presets": {
+      "similarity": {
+        "description": "Default story clustering using deterministic title/content token similarity.",
+        "type": "similarity",
+        "config": {
+          "threshold": 0.42,
+          "title_weight": 0.65,
+          "content_weight": 0.25,
+          "keyword_weight": 0.1,
+          "time_window_hours": 72,
+          "min_shared_tokens": 2,
+          "max_articles": 2000,
+          "include_singletons": true,
+          "max_keywords": 8
+        }
+      },
+      "similarity_strict": {
+        "description": "Higher precision clustering; useful when false positives are costly.",
+        "type": "similarity",
+        "config": {
+          "threshold": 0.58,
+          "title_weight": 0.7,
+          "content_weight": 0.2,
+          "keyword_weight": 0.1,
+          "time_window_hours": 48,
+          "min_shared_tokens": 3,
+          "max_articles": 2000,
+          "include_singletons": true,
+          "max_keywords": 8
+        }
+      },
+      "similarity_loose": {
+        "description": "Higher recall clustering; useful for exploratory topic grouping.",
+        "type": "similarity",
+        "config": {
+          "threshold": 0.32,
+          "title_weight": 0.6,
+          "content_weight": 0.3,
+          "keyword_weight": 0.1,
+          "time_window_hours": 96,
+          "min_shared_tokens": 2,
+          "max_articles": 2000,
+          "include_singletons": true,
+          "max_keywords": 10
+        }
+      }
+    }
+  },
+  "outputs": {
+    "clusters_json": "clusters_YYYYMMDD.json",
+    "clustered_articles_jsonl": "articles_clustered_YYYYMMDD.jsonl"
+  }
+}
