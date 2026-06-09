@@ -14,7 +14,9 @@
           "min_shared_tokens": 2,
           "max_articles": 2000,
           "include_singletons": true,
-          "max_keywords": 8
+          "max_keywords": 8,
+          "tokenizer": "jieba",
+          "fallback_to_ngrams": true
         }
       },
       "similarity_strict": {
@@ -29,7 +31,9 @@
           "min_shared_tokens": 3,
           "max_articles": 2000,
           "include_singletons": true,
-          "max_keywords": 8
+          "max_keywords": 8,
+          "tokenizer": "jieba",
+          "fallback_to_ngrams": true
         }
       },
       "similarity_loose": {
@@ -44,7 +48,9 @@
           "min_shared_tokens": 2,
           "max_articles": 2000,
           "include_singletons": true,
-          "max_keywords": 10
+          "max_keywords": 10,
+          "tokenizer": "jieba",
+          "fallback_to_ngrams": true
         }
       }
     }

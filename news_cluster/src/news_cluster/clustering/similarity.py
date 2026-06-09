@@ -20,6 +20,17 @@ STOPWORDS = {
     "this",
     "news",
     "article",
+    "一个",
+    "一种",
+    "以及",
+    "其中",
+    "进行",
+    "通过",
+    "对于",
+    "相关",
+    "表示",
+    "记者",
+    "报道",
 }
 
 
@@ -75,7 +86,7 @@ class UnionFind:
 
 
 class SimilarityClusterer(ClustererMixin):
-    """Dependency-free article clusterer for grouping the same story across sources."""
+    """Article clusterer for grouping the same story across sources."""
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
         self.name = "similarity"
@@ -89,10 +100,13 @@ class SimilarityClusterer(ClustererMixin):
             "max_articles": 2000,
             "include_singletons": True,
             "max_keywords": 8,
+            "tokenizer": "jieba",
+            "fallback_to_ngrams": True,
         }
         self.config.update(config or {})
         self.clusters: list[ClusterResult] = []
         self._features: list[dict[str, Any]] = []
+        self._jieba = self._load_jieba()
 
     def cluster(self, articles: list[dict[str, Any]]) -> list[ClusterResult]:
         if not articles:
@@ -165,9 +179,47 @@ class SimilarityClusterer(ClustererMixin):
             for token in re.findall(r"[a-z0-9][a-z0-9_.-]{1,}", normalized)
             if token not in STOPWORDS and len(token) > 1
         }
-        cjk_chars = re.findall(r"[\u4e00-\u9fff]", normalized)
-        cjk = {"".join(cjk_chars[i : i + size]) for size in (2, 3) for i in range(0, max(len(cjk_chars) - size + 1, 0))}
+        cjk = self._cjk_tokens(normalized)
         return latin | cjk
+
+    def _load_jieba(self) -> Any | None:
+        if str(self.config.get("tokenizer") or "").lower() != "jieba":
+            return None
+        try:
+            import jieba  # type: ignore[import-not-found]
+        except ImportError:
+            if self.config.get("fallback_to_ngrams", True):
+                print("Warning: jieba is not installed; falling back to CJK n-gram tokens.")
+                return None
+            raise
+        return jieba
+
+    def _cjk_tokens(self, normalized: str) -> set[str]:
+        if self._jieba is not None:
+            return self._jieba_tokens(normalized)
+        if self.config.get("fallback_to_ngrams", True):
+            return self._cjk_ngram_tokens(normalized)
+        return set()
+
+    def _jieba_tokens(self, normalized: str) -> set[str]:
+        tokens: set[str] = set()
+        for token in self._jieba.cut(normalized, cut_all=False):  # type: ignore[union-attr]
+            cleaned = token.strip()
+            if not cleaned or cleaned in STOPWORDS:
+                continue
+            if re.fullmatch(r"[\W_]+", cleaned):
+                continue
+            if re.fullmatch(r"[\u4e00-\u9fff]+", cleaned):
+                if len(cleaned) >= 2:
+                    tokens.add(cleaned)
+                continue
+            if len(cleaned) > 1:
+                tokens.add(cleaned)
+        return tokens
+
+    def _cjk_ngram_tokens(self, normalized: str) -> set[str]:
+        cjk_chars = re.findall(r"[\u4e00-\u9fff]", normalized)
+        return {"".join(cjk_chars[i : i + size]) for size in (2, 3) for i in range(0, max(len(cjk_chars) - size + 1, 0))}
 
     def _same_identity(self, left: dict[str, Any], right: dict[str, Any]) -> bool:
         for key in ("article_id", "url", "content_hash", "title_hash"):

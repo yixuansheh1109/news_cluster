@@ -1,1 +1,1 @@
-# News Cluster runs on the Python standard library.
+jieba>=0.42.1
